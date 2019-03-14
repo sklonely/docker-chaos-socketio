@@ -110,21 +110,23 @@ def decrypt(msg):
             do_json = Do_json(send_key[str(request.sid)])
             msg = do_json.de_json(msg)  # 解密json檔
             print("解密端 : 解包成功")
+            decode_c = True
         except:
             print("解密端 : 解包失敗")
+            decode_c = False
             emit("none_key", "There is not has key")
+        if decode_c:
+            de = chaos_decrypt_mod(msg)  # 初始化解碼資料
+            de.decrypt_Um()  # 解密 Um
+            de.sync_Key()  # 同步金鑰
+            de.decrypt()  # 使用金鑰解密資料
 
-        de = chaos_decrypt_mod(msg)  # 初始化解碼資料
-        de.decrypt_Um()  # 解密 Um
-        de.sync_Key()  # 同步金鑰
-        de.decrypt()  # 使用金鑰解密資料
+            msg = de.pack_jason()  # 資料打包
+            print("解密端 : 資料解密完成")
+            print("解密完資料(給請求端):", msg['_target'], "長度:", len(msg['_target']))
+            res = do_json.en_json(msg)  # 加密資料成json的字串
 
-        msg = de.pack_jason()  # 資料打包
-        print("解密端 : 資料解密完成")
-        print("解密完資料(給請求端):", msg['_target'], "長度:", len(msg['_target']))
-        res = do_json.en_json(msg)  # 加密資料成json的字串
-
-        emit('e2eDecryptReturn', res)  # 回傳
+            emit('e2eDecryptReturn', res)  # 回傳
     else:
         print("解密端[-錯誤-] : 該使用者，未在伺服器申請過通訊金鑰")
         emit("none_key", "There is not has key")
